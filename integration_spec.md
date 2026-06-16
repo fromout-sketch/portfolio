@@ -93,18 +93,21 @@ start
 if (Тип события?) then (PASSED_FOR_EXECUTION)
   :Создание записи в БД;
   :Маппинг данных в формат Достависты;
-  :Отправка запроса create-order;
-  if (Успешно?) then (Да)
-    :Обновление БД (order_id, delivery_id);
-    :Отправка ACCEPT в OMS;
-  else (Нет)
-    :Повторная попытка (retry);
-    if (Попытки исчерпаны?) then (Да)
-      :Отмена заказа в OMS;
+  
+  repeat
+    :Отправка запроса create-order;
+    if (Успешно?) then (Да)
+      :Обновление БД (order_id, delivery_id);
+      :Отправка ACCEPT в OMS;
+      break
     else (Нет)
-      backward :Повторить отправку;
+      :Повторная попытка (retry);
     endif
-  endif
+  backward :Повторить отправку;
+  repeat while (Попытки исчерпаны?) is (Нет)
+  
+  :Отмена заказа в OMS;
+
 else (CANCELLED_BY_CLIENT)
   :Обновление статуса в БД на canceled;
   note right
@@ -126,6 +129,7 @@ partition "Веб-хук от Достависты" {
 }
 stop
 @enduml
+
 
 ```
 
